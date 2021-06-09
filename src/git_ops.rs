@@ -1,14 +1,13 @@
-use std::fs;
-use std::path::PathBuf;
 use regex::Regex;
+use std::fs;
+use std::os::unix::fs::PermissionsExt;
+use std::path::PathBuf;
 
 // TODO
 // - better debugging
 // - activating and deactivating adds \n to script -> remove
 
-
 pub fn update_hook(git_dir_path: &PathBuf, hook: &str, activate: bool) -> std::io::Result<()> {
-
     #[cfg(debug_assertions)]
     println!("Updating hook {:?}, active: {:?}", hook, activate);
 
@@ -17,8 +16,8 @@ pub fn update_hook(git_dir_path: &PathBuf, hook: &str, activate: bool) -> std::i
     hook_path.push(hook);
 
     let mut hook_contents = match hook_path.exists() {
-        true => { fs::read_to_string(&hook_path).unwrap() }
-        false => { String::from("#!/bin/sh\n\n") }
+        true => fs::read_to_string(&hook_path).unwrap(),
+        false => String::from("#!/bin/sh\n\n"),
     };
 
     hook_contents = prune_hook(hook_contents);
@@ -28,9 +27,10 @@ pub fn update_hook(git_dir_path: &PathBuf, hook: &str, activate: bool) -> std::i
     }
 
     #[cfg(debug_assertions)]
-    print!("Wanna write for {:?}: {:?}", &hook, &hook_contents);
+    println!("Wanna write for {:?}: {:?}", &hook, &hook_contents);
 
-    std::fs::write(hook_path, hook_contents)
+    fs::write(&hook_path, hook_contents)?;
+    fs::set_permissions(&hook_path, fs::Permissions::from_mode(0o755))
 }
 
 fn prune_hook(content: String) -> String {
@@ -40,7 +40,7 @@ fn prune_hook(content: String) -> String {
 
 fn inject(content: &mut String, hook: &str) {
     content.push_str("\n");
-    content.push_str(r#"echo "cpt-hook run --hook ""#);
+    content.push_str(r#"cpt-hook run --hook ""#);
     content.push_str(hook);
     content.push_str(r#"""#);
 }

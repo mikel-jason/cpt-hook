@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 clap = "2.33"
 dialoguer = "0.8"
+execute = "0.2"
 regex = "1.5"

@@ -1,43 +1,49 @@
-use std::{env};
+use std::env;
 use std::path::Path;
 use std::process::exit;
 
-use clap::{Arg, App, SubCommand};
-use dialoguer::{MultiSelect, theme::ColorfulTheme};
+use clap::{App, Arg, SubCommand};
+use dialoguer::{theme::ColorfulTheme, MultiSelect};
 
-
-use crate::git_ops::*;
-
+mod actions;
 mod git_ops;
+
+use actions::rust::{CargoFmt, CargoTest};
+use actions::Action;
+use git_ops::*;
 
 fn main() {
     let clap = App::new("cpt-hook")
         .version("dev")
         .author("sarcaustech")
         .about("Interactive management of hooks in your Git repositories")
-        .arg(Arg::with_name("repository")
-            .short("r")
-            .long("repository")
-            .help("Target repository. Default ist current directory.")
-            .takes_value(true)
-            .multiple(false))
-        .subcommand(SubCommand::with_name("init")
-            .about("Sets up the current Git repository for using cpt-hook"))
-        .subcommand(SubCommand::with_name("run")
-            .about("Runs hook handler")
-            .arg(Arg::with_name("hook")
-                .long("hook")
-                .help("Specifies the incoming hook")
+        .arg(
+            Arg::with_name("repository")
+                .short("r")
+                .long("repository")
+                .help("Target repository. Default ist current directory.")
                 .takes_value(true)
-                .multiple(false)
-                .required(true)))
+                .multiple(false),
+        )
+        .subcommand(
+            SubCommand::with_name("init")
+                .about("Sets up the current Git repository for using cpt-hook"),
+        )
+        .subcommand(
+            SubCommand::with_name("run").about("Runs hook handler").arg(
+                Arg::with_name("hook")
+                    .long("hook")
+                    .help("Specifies the incoming hook")
+                    .takes_value(true)
+                    .multiple(false)
+                    .required(true),
+            ),
+        )
         .get_matches();
 
     let repository_path = match clap.value_of("repository") {
         Some(path_str) => Path::new(path_str).to_path_buf(),
-        None => {
-            env::current_dir().unwrap()
-        }
+        None => env::current_dir().unwrap(),
     };
 
     if !repository_path.exists() {
@@ -57,20 +63,15 @@ fn main() {
         #[cfg(debug_assertions)]
         println!("Initializing hooks!");
 
-        let hooks_available = vec![
-            "pre-commit",
-            "pre-push"
-        ];
+        let hooks_available = vec!["pre-commit", "pre-push"];
 
         let hooks_selected = MultiSelect::with_theme(&ColorfulTheme::default())
             .with_prompt("Choose hooks")
             .items(&hooks_available)
-            .interact().unwrap();
+            .interact()
+            .unwrap();
 
-        let hooks_to_set: Vec<&str> = hooks_selected
-            .iter()
-            .map(|&i| hooks_available[i])
-            .collect();
+        let hooks_to_set: Vec<&str> = hooks_selected.iter().map(|&i| hooks_available[i]).collect();
 
         #[cfg(debug_assertions)]
         println!("{:?}", hooks_to_set);
@@ -84,8 +85,44 @@ fn main() {
         println!("Setting up hooks finished");
     }
     if let Some(run_cmd) = clap.subcommand_matches("run") {
+        let mut actions_available: Vec<&dyn Action> = Vec::new();
+        let cargo_fmt = CargoFmt {};
+        let cargo_test = CargoTest {};
+        actions_available.push(&cargo_fmt);
+        actions_available.push(&cargo_test);
+
         if let Some(hook) = run_cmd.value_of("hook") {
+            #[cfg(debug_assertions)]
             println!("Running hook: {:?}", hook);
+
+            let action_applicable: Vec<&dyn Action> = actions_available
+                .into_iter()
+                .filter(|&a| a.validate(&repository_path, &hook))
+                .collect();
+
+            if action_applicable.len() == 0 {
+                println!("cpt-hook cannot find any applicable actions");
+                exit(0)
+            }
+
+            let actions_selected: Vec<&dyn Action> =
+                MultiSelect::with_theme(&ColorfulTheme::default())
+                    .with_prompt("Choose actions")
+                    .items(&action_applicable)
+                    .interact()
+                    .unwrap()
+                    .iter()
+                    .map(|&i| action_applicable[i])
+                    .collect();
+
+            if actions_selected
+                .into_iter()
+                .map(|action| action.execute(&repository_path, &hook))
+                .any(|e| e.is_err())
+            {
+                eprintln!("At least one of the selected checkers failed");
+                exit(1)
+            }
         } else {
             eprintln!("No hook specified");
             exit(1);
