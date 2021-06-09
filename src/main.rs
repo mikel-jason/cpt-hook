@@ -10,6 +10,7 @@ mod git_ops;
 
 use actions::rust::{CargoFmt, CargoTest};
 use actions::Action;
+use colored::Colorize;
 use git_ops::*;
 
 fn main() {
@@ -47,7 +48,10 @@ fn main() {
     };
 
     if !repository_path.exists() {
-        eprintln!("Specified directory does not exist");
+        eprintln!(
+            "{}",
+            "Specified directory does not exist".bright_red().bold()
+        );
         exit(1);
     }
 
@@ -55,13 +59,13 @@ fn main() {
     git_path.push(".git");
 
     if !git_path.exists() {
-        eprintln!("Specified directory is no git repository. To use cpt-hook here, initialize the directory as Git repository and run `cpt-hook init`");
+        eprintln!("{}", "Specified directory is no git repository. To use cpt-hook here, initialize the directory as Git repository and run `cpt-hook init`".bright_red().bold());
         exit(1);
     }
 
     if let Some(_) = clap.subcommand_matches("init") {
         #[cfg(debug_assertions)]
-        println!("Initializing hooks!");
+        println!("{}", "Initializing hooks!");
 
         let hooks_available = vec!["pre-commit", "pre-push"];
 
@@ -78,11 +82,15 @@ fn main() {
 
         for hook in hooks_available {
             if update_hook(&git_path, &hook, hooks_to_set.contains(&hook)).is_err() {
-                eprintln!("Cannot update hook script for {:?}", hook);
+                eprintln!(
+                    "{} {}",
+                    "Cannot update hook script for".bright_red().bold(),
+                    hook.bright_red().bold()
+                );
             }
         }
 
-        println!("Setting up hooks finished");
+        println!("{}", "Setting up hooks finished".bright_green().bold());
     }
     if let Some(run_cmd) = clap.subcommand_matches("run") {
         let mut actions_available: Vec<&dyn Action> = Vec::new();
@@ -101,7 +109,12 @@ fn main() {
                 .collect();
 
             if action_applicable.len() == 0 {
-                println!("cpt-hook cannot find any applicable actions");
+                println!(
+                    "{}",
+                    "cpt-hook cannot find any applicable actions"
+                        .bright_red()
+                        .bold()
+                );
                 exit(0)
             }
 
@@ -120,11 +133,16 @@ fn main() {
                 .map(|action| action.execute(&repository_path, &hook))
                 .any(|e| e.is_err())
             {
-                eprintln!("At least one of the selected checkers failed");
+                eprintln!(
+                    "{}",
+                    "At least one of the selected checkers failed"
+                        .bright_red()
+                        .bold()
+                );
                 exit(1)
             }
         } else {
-            eprintln!("No hook specified");
+            eprintln!("{}", "No hook specified".bright_red().bold());
             exit(1);
         }
     }
