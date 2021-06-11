@@ -1,3 +1,4 @@
+use git2::Repository;
 use regex::Regex;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
@@ -7,11 +8,22 @@ use std::path::PathBuf;
 // - better debugging
 // - activating and deactivating adds \n to script -> remove
 
-pub fn update_hook(git_dir_path: &PathBuf, hook: &str, activate: bool) -> std::io::Result<()> {
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+pub fn get_git_root(path: &PathBuf) -> Result<PathBuf> {
+    let repo = Repository::discover(path)?;
+    match repo.workdir() {
+        None => Err(Box::from("Repository has no workdir")),
+        Some(path) => Ok(path.to_path_buf()),
+    }
+}
+
+pub fn update_hook(repository_path: &PathBuf, hook: &str, activate: bool) -> std::io::Result<()> {
     #[cfg(debug_assertions)]
     println!("Updating hook {:?}, active: {:?}", hook, activate);
 
-    let mut hook_path = git_dir_path.clone();
+    let mut hook_path = repository_path.clone();
+    hook_path.push(".git");
     hook_path.push("hooks");
     hook_path.push(hook);
 

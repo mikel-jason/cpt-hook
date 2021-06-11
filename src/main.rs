@@ -1,5 +1,5 @@
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 
 use clap::{App, Arg, SubCommand};
@@ -42,26 +42,27 @@ fn main() {
         )
         .get_matches();
 
-    let repository_path = match clap.value_of("repository") {
+    let input_path = match clap.value_of("repository") {
         Some(path_str) => Path::new(path_str).to_path_buf(),
         None => env::current_dir().unwrap(),
     };
 
-    if !repository_path.exists() {
-        eprintln!(
-            "{}",
-            "Specified directory does not exist".bright_red().bold()
-        );
-        exit(1);
-    }
-
-    let mut git_path = repository_path.clone();
-    git_path.push(".git");
-
-    if !git_path.exists() {
-        eprintln!("{}", "Specified directory is no git repository. To use cpt-hook here, initialize the directory as Git repository and run `cpt-hook init`".bright_red().bold());
-        exit(1);
-    }
+    let repository_path = match get_git_root(&input_path) {
+        Ok(path) => path,
+        Err(_) => {
+            eprintln!(
+                "{} {}\n{}",
+                "cpt-hook was not launched in a git workdir root:"
+                    .bright_red()
+                    .bold(),
+                &input_path.to_str().unwrap().bright_magenta().italic(),
+                "Does the directory exist? Is it part of a git repository? Also try --hook option"
+                    .bright_red()
+                    .bold()
+            );
+            exit(1);
+        }
+    };
 
     if let Some(_) = clap.subcommand_matches("init") {
         #[cfg(debug_assertions)]
@@ -81,7 +82,7 @@ fn main() {
         println!("{:?}", hooks_to_set);
 
         for hook in hooks_available {
-            if update_hook(&git_path, &hook, hooks_to_set.contains(&hook)).is_err() {
+            if update_hook(&repository_path, &hook, hooks_to_set.contains(&hook)).is_err() {
                 eprintln!(
                     "{} {}",
                     "Cannot update hook script for".bright_red().bold(),
