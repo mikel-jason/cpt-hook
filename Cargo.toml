@@ -1,8 +1,14 @@
 [package]
 name = "cpt-hook"
 version = "0.1.0"
-authors = ["Mikel Muennekhoff"]
+authors = ["Mikel Muennekhoff <mmuennekhoff+github@gmail.com>"]
 edition = "2018"
+license-file = "LICENSE"
+readme = "CRATE.md"
+repository = "https://github.com/sarcaustech/cpt-hook"
+description = "Out-of-the-box hooks for your Git repositories"
+keywords = ["git", "cli"]
+categories = ["Command line utilities", "Development tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
