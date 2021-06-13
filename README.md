@@ -1,8 +1,8 @@
 # Cpt. Hook &emsp; ![status] ![license] ![crate]
 
 [status]: https://img.shields.io/badge/status-unstable-red
-[license]: https://img.shields.io/crates/l/cpt-hook.svg
-[crate]: https://img.shields.io/crates/v/cpt-hook.svg
+[license]: https://img.shields.io/crates/l/cpt-hook
+[crate]: https://img.shields.io/crates/v/cpt-hook
 [docs]: https://docs.rs/cpt-hook/badge.svg
 
 **Out-of-the-box hooks for your Git repositories** 
