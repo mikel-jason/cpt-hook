@@ -3,11 +3,13 @@ use std::fmt::{Debug, Display};
 use std::path::PathBuf;
 use std::process::Command;
 
+use crate::git_ops::Hook;
+
 pub mod rust;
 
 pub trait Action: Debug + Display {
-    fn validate(&self, repository_path: &PathBuf, hook: &str) -> bool;
-    fn execute(&self, repository_path: &PathBuf, hook: &str) -> Result<(), &'static str>;
+    fn validate(&self, repository_path: &PathBuf, hook: &Hook) -> bool;
+    fn execute(&self, repository_path: &PathBuf, hook: &Hook) -> Result<(), &'static str>;
 }
 
 pub fn check_if_installed(command: &str, argument: &str) -> bool {

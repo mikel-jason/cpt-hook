@@ -1,5 +1,5 @@
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::exit;
 
 use clap::{App, Arg, SubCommand};
@@ -68,7 +68,7 @@ fn main() {
         #[cfg(debug_assertions)]
         println!("{}", "Initializing hooks!");
 
-        let hooks_available = vec!["pre-commit", "pre-push"];
+        let hooks_available: Vec<String> = Hook::all().iter().map(|h| h.to_string()).collect();
 
         let hooks_selected = MultiSelect::with_theme(&ColorfulTheme::default())
             .with_prompt("Choose hooks")
@@ -76,13 +76,23 @@ fn main() {
             .interact()
             .unwrap();
 
-        let hooks_to_set: Vec<&str> = hooks_selected.iter().map(|&i| hooks_available[i]).collect();
+        let hooks_clone = hooks_available.clone(); // TODO remove clone
+        let hooks_to_set: Vec<&str> = hooks_selected
+            .iter()
+            .map(|&i| hooks_clone[i].as_str())
+            .collect();
 
         #[cfg(debug_assertions)]
         println!("{:?}", hooks_to_set);
 
         for hook in hooks_available {
-            if update_hook(&repository_path, &hook, hooks_to_set.contains(&hook)).is_err() {
+            if update_hook(
+                &repository_path,
+                &Hook::from(&hook).expect("Unknown hook"),
+                hooks_to_set.contains(&hook.as_str()),
+            )
+            .is_err()
+            {
                 eprintln!(
                     "{} {}",
                     "Cannot update hook script for".bright_red().bold(),
@@ -104,9 +114,17 @@ fn main() {
             #[cfg(debug_assertions)]
             println!("Running hook: {:?}", hook);
 
+            let the_hook = match Hook::from(hook) {
+                Ok(hook) => hook,
+                Err(_) => {
+                    eprintln!("{} {}", "Unknown hook:".bright_red(), hook.red());
+                    exit(1)
+                }
+            };
+
             let action_applicable: Vec<&dyn Action> = actions_available
                 .into_iter()
-                .filter(|&a| a.validate(&repository_path, &hook))
+                .filter(|&a| a.validate(&repository_path, &the_hook))
                 .collect();
 
             if action_applicable.len() == 0 {
@@ -131,7 +149,7 @@ fn main() {
 
             if actions_selected
                 .into_iter()
-                .map(|action| action.execute(&repository_path, &hook))
+                .map(|action| action.execute(&repository_path, &the_hook))
                 .any(|e| e.is_err())
             {
                 eprintln!(

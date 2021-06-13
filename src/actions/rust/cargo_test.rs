@@ -1,5 +1,6 @@
 use crate::actions::rust::validate_rust;
 use crate::actions::{run, Action};
+use crate::git_ops::Hook;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
@@ -8,11 +9,11 @@ use std::path::PathBuf;
 pub struct CargoTest {}
 
 impl Action for CargoTest {
-    fn validate(&self, repository_path: &PathBuf, _hook: &str) -> bool {
+    fn validate(&self, repository_path: &PathBuf, _hook: &Hook) -> bool {
         validate_rust(&repository_path)
     }
 
-    fn execute(&self, _repository_path: &PathBuf, _hook: &str) -> Result<(), &'static str> {
+    fn execute(&self, _repository_path: &PathBuf, _hook: &Hook) -> Result<(), &'static str> {
         run("cargo test")
     }
 }
