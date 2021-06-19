@@ -12,6 +12,7 @@ use actions::rust::{CargoFmt, CargoTest};
 use actions::Action;
 use colored::Colorize;
 use git_ops::*;
+use crate::actions::node::npm_scripts::get_node_scripts;
 
 fn main() {
     let clap = App::new("cpt-hook")
@@ -109,6 +110,11 @@ fn main() {
         let cargo_test = CargoTest {};
         actions_available.push(&cargo_fmt);
         actions_available.push(&cargo_test);
+
+        let node_scripts = get_node_scripts(&repository_path);
+        node_scripts
+            .iter()
+            .for_each(|action| actions_available.push(&**action));
 
         if let Some(hook) = run_cmd.value_of("hook") {
             #[cfg(debug_assertions)]

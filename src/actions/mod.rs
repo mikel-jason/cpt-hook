@@ -5,6 +5,7 @@ use std::process::Command;
 
 use crate::git_ops::Hook;
 
+pub mod node;
 pub mod rust;
 
 pub trait Action: Debug + Display {
