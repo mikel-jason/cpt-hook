@@ -8,7 +8,7 @@ use std::io::{BufReader};
 
 use serde_json::Value;
 use serde_json::value::Value::Object;
-use crate::actions::node::validate_node;
+use crate::actions::node::{validate_node, get_package_manager};
 
 #[derive(Debug)]
 pub struct NodeScript {
@@ -21,7 +21,8 @@ impl Action for NodeScript {
     }
 
     fn execute(&self, _repository_path: &PathBuf, _hook: &Hook) -> Result<(), &'static str> {
-        run(&*format!("npm run {}", self.cmd))
+        let package_manager = get_package_manager();
+        run(&*format!("{} run {}", package_manager, self.cmd))
     }
 }
 

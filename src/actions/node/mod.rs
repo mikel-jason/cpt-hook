@@ -15,3 +15,11 @@ pub fn validate_node(repository_path: &PathBuf) -> bool {
 
     checks.iter().all(|&b| b)
 }
+
+pub fn get_package_manager() -> String {
+    if check_if_installed("yarn", "-v") {
+        String::from("yarn")
+    } else {
+        String::from("npm")
+    }
+}
