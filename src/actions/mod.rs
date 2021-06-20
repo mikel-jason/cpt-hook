@@ -2,6 +2,7 @@ use execute::Execute;
 use std::fmt::{Debug, Display};
 use std::path::PathBuf;
 use std::process::Command;
+use colored::Colorize;
 
 use crate::git_ops::Hook;
 
@@ -27,6 +28,7 @@ pub fn check_if_file_exists(path: &PathBuf) -> bool {
 }
 
 pub fn run(cmd: &str) -> Result<(), &'static str> {
+    println!("{} {}", "Running hook:".bright_cyan(), &cmd);
     match Command::new("sh")
         .arg("-c")
         .arg(&cmd)
