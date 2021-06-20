@@ -112,6 +112,16 @@ impl Hook {
             Hook::PostIndexChange,
         ]
     }
+
+    pub fn simple() -> Vec<Hook> {
+        vec![
+            Hook::PreCommit,
+            Hook::PostCommit,
+            Hook::PostCheckout,
+            Hook::PostMerge,
+            Hook::PrePush,
+        ]
+    }
 }
 
 impl ToString for Hook {

@@ -28,7 +28,12 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("init")
-                .about("Sets up the current Git repository for using cpt-hook"),
+                .about("Sets up the current Git repository for using cpt-hook")
+                .arg(Arg::with_name("all-hooks")
+                    .long("all-hooks")
+                    .short("a")
+                    .help("Select from all available hooks (see git docs)")
+                ),
         )
         .subcommand(
             SubCommand::with_name("run").about("Runs hook handler").arg(
@@ -64,11 +69,14 @@ fn main() {
         }
     };
 
-    if let Some(_) = clap.subcommand_matches("init") {
+    if let Some(clap_init) = clap.subcommand_matches("init") {
         #[cfg(debug_assertions)]
         println!("{}", "Initializing hooks!");
 
-        let hooks_available: Vec<String> = Hook::all().iter().map(|h| h.to_string()).collect();
+        let hooks_available: Vec<String> = match clap_init.is_present("all-hooks"){
+            true => Hook::all(),
+            false => Hook::simple()
+        }.iter().map(|h| h.to_string()).collect();
 
         let hooks_selected = MultiSelect::with_theme(&ColorfulTheme::default())
             .with_prompt("Choose hooks")
