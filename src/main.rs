@@ -8,7 +8,7 @@ use dialoguer::{theme::ColorfulTheme, MultiSelect};
 mod actions;
 mod git_ops;
 
-use actions::rust::{CargoFmt, CargoTest, CargoInstall};
+use actions::rust::{CargoFmt, CargoTest, CargoInstall, CargoPublish};
 use actions::Action;
 use colored::Colorize;
 use git_ops::*;
@@ -116,9 +116,11 @@ fn main() {
         let cargo_fmt = CargoFmt {};
         let cargo_test = CargoTest {};
         let cargo_install = CargoInstall {};
+        let cargo_publish = CargoPublish {};
         actions_available.push(&cargo_fmt);
         actions_available.push(&cargo_test);
         actions_available.push(&cargo_install);
+        actions_available.push(&cargo_publish);
 
         if let Some(hook) = run_cmd.value_of("hook") {
             #[cfg(debug_assertions)]
