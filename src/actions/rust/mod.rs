@@ -3,9 +3,11 @@ use std::path::PathBuf;
 
 mod cargo_fmt;
 mod cargo_test;
+mod cargo_install;
 
 pub use cargo_fmt::CargoFmt;
 pub use cargo_test::CargoTest;
+pub use cargo_install::CargoInstall;
 
 pub fn validate_rust(repository_path: &PathBuf) -> bool {
     let mut toml_path = PathBuf::new();
